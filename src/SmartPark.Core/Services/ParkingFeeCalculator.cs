@@ -65,12 +65,11 @@ public class ParkingFeeCalculator
 
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
-    // Grace period
     if (totalMinutes <= 30)
         return new ParkingFeeResult { TotalFee = 0 };
 
-    var billableMinutes = totalMinutes - 30;
-    var hours = Math.Ceiling(billableMinutes / 60);
+    var billableMinutes = Math.Max(0, totalMinutes - 30);
+    var billableHours = Math.Ceiling(billableMinutes / 60);
 
     decimal rate = vehicleType switch
     {
@@ -80,11 +79,12 @@ public class ParkingFeeCalculator
         _ => 0m
     };
 
-    var baseFee = rate * (decimal)hours;
+    var baseFee = rate * (decimal)billableHours;
 
     return new ParkingFeeResult
     {
         TotalFee = baseFee
     };
 }
+
 }
