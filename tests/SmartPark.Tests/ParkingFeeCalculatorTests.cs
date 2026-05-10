@@ -114,9 +114,29 @@ public void CalculateFee_Car_LongDuration_ShouldNotExceedDailyCap()
     #endregion
 
     #region Membership Discounts
-    // Test discount tiers and what amounts they apply to
-    #endregion
+   [Fact]
+public void CalculateFee_Silver_2Hours_Returns10PercentDiscount()
+{
+    // Arrange
+    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+    var checkOut = checkIn.AddHours(2);
 
+    // Act
+    var result = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Silver,
+        checkIn,
+        checkOut);
+
+    // Expected:
+    // Base = 2000
+    // Discount = 10% = 200
+    // Final = 1800
+
+    // Assert
+    Assert.Equal(1800m, result.TotalFee);
+}
+#endregion
     #region Lost Ticket
     // Test the penalty and how it interacts with other fee modifiers
     #endregion
