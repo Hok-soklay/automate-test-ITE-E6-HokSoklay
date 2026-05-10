@@ -13,31 +13,29 @@ public class ParkingFeeCalculatorTests
     //  EXAMPLE TEST — shows the naming convention and AAA pattern.
     //  Delete or keep this; it does not count toward your grade.
     // ────────────────────────────────────────────────────────────
+
     #region Basic Fee Calculation
     // Test basic hourly rates for each vehicle type
     // Consider using [Theory] with [InlineData] for multiple scenarios
     #endregion
 
     #region Grace Period
-   [Fact]
-public void CalculateFee_GracePeriod_30Minutes_ReturnsZero()
+    [Fact]
+public void CalculateFee_Motorcycle_1Hour_Returns500()
 {
     // Arrange
-    var calculator = new ParkingFeeCalculator();
-
     var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
-    var checkOut = checkIn.AddMinutes(30);
+    var checkOut = checkIn.AddHours(1);
 
     // Act
-    var result = calculator.CalculateFee(
-        VehicleType.Car,
+    var result = _calculator.CalculateFee(
+        VehicleType.Motorcycle,
         MembershipTier.Guest,
         checkIn,
         checkOut);
 
     // Assert
-    Assert.Equal(0, result.TotalFee);
-}
+    Assert.Equal(500m, result.TotalFee);
 }
     #endregion
 
