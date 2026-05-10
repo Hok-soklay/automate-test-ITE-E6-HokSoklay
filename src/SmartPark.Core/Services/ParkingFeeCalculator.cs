@@ -79,23 +79,13 @@ public class ParkingFeeCalculator
     if (baseFee > dailyCap)
         baseFee = dailyCap;
 
-    // ================================
-    // HOLIDAY SURCHARGE
-    // ================================
+    // Holiday surcharge
     decimal surcharge = CalculateHolidaySurcharge(baseFee, isHoliday);
 
-    // ================================
-    // MEMBERSHIP DISCOUNT
-    // ================================
-    decimal discountRate = membership switch
-    {
-        MembershipTier.Silver => 0.10m,
-        MembershipTier.Gold => 0.25m,
-        MembershipTier.Platinum => 0.40m,
-        _ => 0m
-    };
-
-    decimal discount = (baseFee + surcharge) * discountRate;
+    // Refactored membership discount
+    decimal discount = CalculateMembershipDiscount(
+        baseFee + surcharge,
+        membership);
 
     return new ParkingFeeResult
     {
@@ -104,7 +94,7 @@ public class ParkingFeeCalculator
 }
 
 /// <summary>
-/// Refactored: isolates holiday logic for readability and test clarity
+/// Refactored: isolates holiday logic for readability
 /// </summary>
 private decimal CalculateHolidaySurcharge(decimal baseFee, bool isHoliday)
 {
@@ -112,6 +102,24 @@ private decimal CalculateHolidaySurcharge(decimal baseFee, bool isHoliday)
         return 0m;
 
     return baseFee * 0.5m;
+}
+
+/// <summary>
+/// Refactored: isolates membership discount logic
+/// </summary>
+private decimal CalculateMembershipDiscount(
+    decimal amount,
+    MembershipTier membership)
+{
+    decimal discountRate = membership switch
+    {
+        MembershipTier.Silver => 0.10m,
+        MembershipTier.Gold => 0.25m,
+        MembershipTier.Platinum => 0.40m,
+        _ => 0m
+    };
+
+    return amount * discountRate;
 }
 
 /// <summary>
