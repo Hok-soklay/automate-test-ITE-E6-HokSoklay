@@ -66,25 +66,44 @@ public class ParkingFeeCalculator
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
     // Grace period
-    if (totalMinutes <= 30)
+    if (totalMinutes <= GracePeriodMinutes)
     {
-        return new ParkingFeeResult { TotalFee = 0 };
+        return new ParkingFeeResult
+        {
+            TotalFee = isLostTicket ? LostTicketPenalty : 0m
+        };
     }
 
-    // billable hours
-    var billableHours = (int)Math.Ceiling((totalMinutes - 30) / 60.0);
+    // Billable hours (rounded up)
+    var billableHours = (int)Math.Ceiling((totalMinutes - GracePeriodMinutes) / 60.0);
     if (billableHours < 1) billableHours = 1;
 
-    // rate
+    // Vehicle rate
     decimal rate = vehicleType switch
     {
-        VehicleType.Motorcycle => 500m,
-        VehicleType.Car => 1000m,
-        VehicleType.SUV => 1500m,
+        VehicleType.Motorcycle => MotorcycleRatePerHour,
+        VehicleType.Car => CarRatePerHour,
+        VehicleType.SUV => SuvRatePerHour,
         _ => 0m
     };
 
     var baseFee = rate * billableHours;
+
+    // Daily cap
+    decimal cap = vehicleType switch
+    {
+        VehicleType.Motorcycle => MotorcycleDailyCap,
+        VehicleType.Car => CarDailyCap,
+        VehicleType.SUV => SuvDailyCap,
+        _ => 0m
+    };
+
+    if (baseFee > cap)
+        baseFee = cap;
+
+    // Lost ticket penalty
+    if (isLostTicket)
+        baseFee += LostTicketPenalty;
 
     return new ParkingFeeResult
     {
