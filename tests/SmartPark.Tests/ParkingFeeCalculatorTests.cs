@@ -37,32 +37,29 @@ public void CalculateFee_Car_1Hour_Returns1000()
     // Consider using [Theory] with [InlineData] for multiple scenarios
     #endregion
 
-    #region Grace Period
-    // Test the free parking window and its boundaries
-    #endregion
 
-    #region Duration Rounding
-    // Test how partial hours are rounded for billing
-    #endregion
+            #region Duration Rounding
+            // Test how partial hours are rounded for billing
+            #endregion
 
-    #region Daily Cap
-    [Fact]
-public void CalculateFee_Car_LongDuration_ShouldNotExceedDailyCap()
-{
-    // Arrange
-    var checkIn = new DateTime(2026, 5, 10, 8, 0, 0);
-    var checkOut = checkIn.AddHours(24);
+            #region Daily Cap
+            [Fact]
+        public void CalculateFee_Car_LongDuration_ShouldNotExceedDailyCap()
+        {
+            // Arrange
+            var checkIn = new DateTime(2026, 5, 10, 8, 0, 0);
+            var checkOut = checkIn.AddHours(24);
 
-    // Act
-    var result = _calculator.CalculateFee(
-        VehicleType.Car,
-        MembershipTier.Guest,
-        checkIn,
-        checkOut);
+            // Act
+            var result = _calculator.CalculateFee(
+                VehicleType.Car,
+                MembershipTier.Guest,
+                checkIn,
+                checkOut);
 
-    // Assert
-    Assert.True(result.TotalFee <= 15000m);
-}
+            // Assert
+            Assert.True(result.TotalFee <= 15000m);
+        }
     #endregion
 
     #region Overnight Fee
