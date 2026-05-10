@@ -80,13 +80,26 @@ public class ParkingFeeCalculator
         baseFee = dailyCap;
 
     // ================================
-    // REFACTORED HOLIDAY SECTION ONLY
+    // HOLIDAY SURCHARGE
     // ================================
     decimal surcharge = CalculateHolidaySurcharge(baseFee, isHoliday);
 
+    // ================================
+    // MEMBERSHIP DISCOUNT
+    // ================================
+    decimal discountRate = membership switch
+    {
+        MembershipTier.Silver => 0.10m,
+        MembershipTier.Gold => 0.25m,
+        MembershipTier.Platinum => 0.40m,
+        _ => 0m
+    };
+
+    decimal discount = (baseFee + surcharge) * discountRate;
+
     return new ParkingFeeResult
     {
-        TotalFee = baseFee + surcharge
+        TotalFee = baseFee + surcharge - discount
     };
 }
 
