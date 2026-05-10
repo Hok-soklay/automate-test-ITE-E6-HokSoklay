@@ -65,7 +65,7 @@ public class ParkingFeeCalculator
 
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
-    // ✅ Grace period (IMPORTANT FIX)
+    // Grace period
     if (totalMinutes <= 30)
         return new ParkingFeeResult { TotalFee = 0 };
 
