@@ -82,14 +82,22 @@ public class ParkingFeeCalculator
     // Holiday surcharge
     decimal surcharge = CalculateHolidaySurcharge(baseFee, isHoliday);
 
-    // Refactored membership discount
+    // Membership discount
     decimal discount = CalculateMembershipDiscount(
         baseFee + surcharge,
         membership);
 
+    // Lost ticket penalty
+    decimal lostTicketPenalty = 0m;
+
+    if (isLostTicket)
+    {
+        lostTicketPenalty = 20000m;
+    }
+
     return new ParkingFeeResult
     {
-        TotalFee = baseFee + surcharge - discount
+        TotalFee = baseFee + surcharge - discount + lostTicketPenalty
     };
 }
 
