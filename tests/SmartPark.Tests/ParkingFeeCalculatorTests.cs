@@ -63,25 +63,26 @@ public void CalculateFee_Car_1Hour_Returns1000()
     #endregion
 
     #region Overnight Fee
-//         [Fact]
-// public void CalculateFee_Car_CrossesOvernight_AddsFlatOvernightFee()
-// {
-//     // Arrange
-//     var checkIn = new DateTime(2026, 5, 10, 21, 0, 0); // 9 PM
-//     var checkOut = new DateTime(2026, 5, 11, 2, 0, 0); // next day 2 AM
 
-//     // Act
-//     var result = _calculator.CalculateFee(
-//         VehicleType.Car,
-//         MembershipTier.Guest,
-//         checkIn,
-//         checkOut);
+            [Fact]
+            public void CalculateFee_CrossMidnight_ShouldApplyOvernightFee()
+            {
+                // Arrange
+                var checkIn = new DateTime(2026, 5, 10, 22, 0, 0); // 10 PM
+                var checkOut = new DateTime(2026, 5, 11, 2, 0, 0); // 2 AM next day
 
-//     // Assert
-//     Assert.Equal(3000m, result.TotalFee); 
-//     // (expected: 1 hour = 1000 + overnight fee 2000)
-// }
-    #endregion
+                // Act
+                var result = _calculator.CalculateFee(
+                    VehicleType.Car,
+                    MembershipTier.Guest,
+                    checkIn,
+                    checkOut);
+
+                // Assert (INTENTIONALLY EXPECTING RULE THAT DOES NOT EXIST YET)
+                Assert.True(result.TotalFee > 5000m);
+            }
+
+     #endregion
 
     #region Weekend Surcharge
     // Test the percentage-based surcharge on specific days
