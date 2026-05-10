@@ -49,8 +49,8 @@ public class ParkingFeeCalculator
     bool isHoliday = false)
 {
     // 1. Validate
-    if (checkOut < checkIn)
-        throw new ArgumentException("Invalid time range");
+   if (checkOut < checkIn)
+    return new ParkingFeeResult { TotalFee = 0 };
 
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
