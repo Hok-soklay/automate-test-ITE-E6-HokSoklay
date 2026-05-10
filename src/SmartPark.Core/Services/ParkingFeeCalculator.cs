@@ -77,13 +77,19 @@ public class ParkingFeeCalculator
         decimal dailyCap = GetDailyCap(vehicleType);
 
         if (baseFee > dailyCap)
-            baseFee = dailyCap;
+    baseFee = dailyCap;
 
-        // Return result (simplified for now)
-        return new ParkingFeeResult
-        {
-            TotalFee = baseFee
-        };
+decimal surcharge = 0m;
+
+if (isHoliday)
+{
+    surcharge = baseFee * 0.5m;
+}
+
+return new ParkingFeeResult
+{
+    TotalFee = baseFee + surcharge
+};
     }
 
     /// <summary>
