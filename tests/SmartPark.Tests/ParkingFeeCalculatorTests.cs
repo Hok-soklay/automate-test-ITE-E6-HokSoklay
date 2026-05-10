@@ -66,7 +66,31 @@ public void CalculateFee_Car_LongDuration_ShouldNotExceedDailyCap()
     #endregion
 
     #region Overnight Fee
-    // Test the flat fee applied for sessions that extend into late hours
+     [Fact]
+public void CalculateFee_Overnight_ShouldBeHigherThanSameDurationSameDay()
+{
+    // Arrange
+    var checkIn = new DateTime(2026, 5, 10, 21, 0, 0);
+
+    var sameDayOut = checkIn.AddHours(4); // same day
+    var overnightOut = new DateTime(2026, 5, 11, 1, 0, 0); // next day
+
+    // Act
+    var normal = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Guest,
+        checkIn,
+        sameDayOut);
+
+    var overnight = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Guest,
+        checkIn,
+        overnightOut);
+
+    // Assert (THIS MUST FAIL FIRST)
+    Assert.True(overnight.TotalFee > normal.TotalFee);
+}
     #endregion
 
     #region Weekend Surcharge
