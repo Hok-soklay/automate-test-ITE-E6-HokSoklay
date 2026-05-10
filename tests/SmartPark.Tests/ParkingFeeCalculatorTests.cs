@@ -100,23 +100,19 @@ public void CalculateFee_Car_LongDuration_DoesNotExceedDailyCap()
     #endregion
 
     #region Edge Cases
-   [Fact]
-public void CalculateFee_LostTicket_AddsPenalty()
+  [Fact]
+public void CalculateFee_Motorcycle_1Hour_Returns500()
 {
-    // Arrange
     var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
     var checkOut = checkIn.AddHours(1);
 
-    // Act
     var result = _calculator.CalculateFee(
-        VehicleType.Car,
+        VehicleType.Motorcycle,
         MembershipTier.Guest,
         checkIn,
-        checkOut,
-        isLostTicket: true);
+        checkOut);
 
-    // Assert
-    Assert.True(result.TotalFee >= 20000m);
+    Assert.Equal(500m, result.TotalFee);
 }
     #endregion
 

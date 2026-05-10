@@ -58,8 +58,29 @@ public class ParkingSessionManagerTests
     }
 
     #region CheckIn — Happy Path
-    // Test successful vehicle check-in and verify correct interactions
-    #endregion
+  
+
+[Fact]
+public async Task CheckInAsync_ValidVehicle_SavesTicket()
+{
+    // Arrange
+    _dateTimeStub.Setup(x => x.Now)
+        .Returns(new DateTime(2026, 5, 10, 10, 0, 0));
+
+    _membershipStub.Setup(x => x.GetMembershipTier(It.IsAny<string>()))
+        .Returns(MembershipTier.Guest);
+
+    _repoStub.Setup(x => x.GetActiveTicketByPlateAsync(It.IsAny<string>()))
+        .ReturnsAsync((ParkingTicket?)null);
+
+    // Act
+    var result = await _manager.CheckInAsync("CAR-123", VehicleType.Car);
+
+    // Assert
+    _repoStub.Verify(x => x.SaveTicketAsync(It.IsAny<ParkingTicket>()), Times.Once);
+}
+
+#endregion
 
     #region CheckIn — Validation
     // Test check-in error scenarios and verify side effects
