@@ -2,56 +2,31 @@ using SmartPark.Core.Models;
 
 namespace SmartPark.Core.Services;
 
-/// <summary>
-/// Core pricing engine. Pure calculation service with no external dependencies.
-/// Students: implement this class using TDD (Red-Green-Refactor).
-/// </summary>
 public class ParkingFeeCalculator
 {
-    // ── Pricing constants (from spec §4) ────────────────────────
+    // ── Rates ─────────────────────────────
+    private const decimal MotorcycleRate = 500m;
+    private const decimal CarRate = 1000m;
+    private const decimal SuvRate = 1500m;
 
-    // Hourly rates (KHR)
-    private const decimal MotorcycleRatePerHour = 500m;
-    private const decimal CarRatePerHour = 1_000m;
-    private const decimal SuvRatePerHour = 1_500m;
+    private const decimal MotorcycleCap = 4000m;
+    private const decimal CarCap = 8000m;
+    private const decimal SuvCap = 12000m;
 
-    // Daily caps (KHR)
-    private const decimal MotorcycleDailyCap = 4_000m;
-    private const decimal CarDailyCap = 8_000m;
-    private const decimal SuvDailyCap = 12_000m;
+    private const int GraceMinutes = 30;
 
-    // Time-based rules
-    private const int GracePeriodMinutes = 30;
-    private const decimal OvernightFlatFee = 2_000m;
-    private const int OvernightHourThreshold = 22; // 10 PM
+    private const decimal OvernightFee = 2000m;
+    private const int OvernightHour = 22;
 
-    // Surcharges
-    private const decimal WeekendSurchargeRate = 0.20m;
-    private const decimal HolidaySurchargeRate = 0.50m;
+    private const decimal WeekendRate = 0.20m;
+    private const decimal HolidayRate = 0.50m;
 
-    // Membership discounts
-    private const decimal SilverDiscountRate = 0.10m;
-    private const decimal GoldDiscountRate = 0.25m;
-    private const decimal PlatinumDiscountRate = 0.40m;
+    private const decimal Silver = 0.10m;
+    private const decimal Gold = 0.25m;
+    private const decimal Platinum = 0.40m;
 
-    // Penalties
-    private const decimal LostTicketPenalty = 20_000m;
+    private const decimal LostTicket = 20000m;
 
-    /// <summary>
-    /// Calculates the parking fee following the 9-step flow in the spec.
-    /// </summary>
-    /// <remarks>
-    /// Steps:
-    ///   1. Validate: checkOut before checkIn → ArgumentException
-    ///   2. Grace period: total ≤ 30 min → free (lost-ticket penalty still applies)
-    ///   3. Duration: billableHours = ⌈(totalMinutes − 30) / 60⌉, min 1
-    ///   4. Base fee: billableHours × hourlyRate, capped at dailyCap
-    ///   5. Overnight: +2,000 KHR if session spans past 22:00
-    ///   6. Surcharge: weekend +20% OR holiday +50% on baseFee (not both)
-    ///   7. Discount: (baseFee + surcharge) × membershipRate
-    ///   8. Lost ticket: +20,000 KHR (not subject to discounts)
-    ///   9. Total: baseFee + surcharge − discount + overnight + penalty (min 0)
-    /// </remarks>
     public ParkingFeeResult CalculateFee(
         VehicleType vehicleType,
         MembershipTier membership,
@@ -60,9 +35,97 @@ public class ParkingFeeCalculator
         bool isLostTicket = false,
         bool isHoliday = false)
     {
-        // TODO: Implement the 9-step fee calculation using TDD.
-        // Write a failing test first (RED), then implement just enough to pass (GREEN).
-        throw new NotImplementedException(
-            "Implement this method using TDD — see the assignment spec for the 9-step calculation flow.");
+        // 1. Validate
+        if (checkOut < checkIn)
+            throw new ArgumentException("checkOut cannot be before checkIn");
+
+        var totalMinutes = (checkOut - checkIn).TotalMinutes;
+
+        // 2. Grace period
+        if (totalMinutes <= GraceMinutes)
+        {
+            return new ParkingFeeResult
+            {
+                TotalFee = isLostTicket ? LostTicket : 0m
+            };
+        }
+
+        // 3. Duration
+        var billableMinutes = totalMinutes - GraceMinutes;
+        var hours = Math.Ceiling(billableMinutes / 60.0);
+        if (hours < 1) hours = 1;
+
+        // 4. Base fee
+        decimal rate = vehicleType switch
+        {
+            VehicleType.Motorcycle => MotorcycleRate,
+            VehicleType.Car => CarRate,
+            VehicleType.SUV => SuvRate,
+            _ => 0m
+        };
+
+        decimal baseFee = (decimal)hours * rate;
+
+        // Apply cap
+        baseFee = vehicleType switch
+        {
+            VehicleType.Motorcycle => Math.Min(baseFee, MotorcycleCap),
+            VehicleType.Car => Math.Min(baseFee, CarCap),
+            VehicleType.SUV => Math.Min(baseFee, SuvCap),
+            _ => baseFee
+        };
+
+        // 5. Overnight
+        decimal overnightFee = IsOvernight(checkIn, checkOut)
+            ? OvernightFee
+            : 0m;
+
+        // 6. Surcharge (holiday overrides weekend)
+        decimal surcharge = 0m;
+
+        if (isHoliday)
+        {
+            surcharge = baseFee * HolidayRate;
+        }
+        else if (IsWeekend(checkIn))
+        {
+            surcharge = baseFee * WeekendRate;
+        }
+
+        // 7. Membership discount
+        decimal discountRate = membership switch
+        {
+            MembershipTier.Silver => Silver,
+            MembershipTier.Gold => Gold,
+            MembershipTier.Platinum => Platinum,
+            _ => 0m
+        };
+
+        decimal discount = (baseFee + surcharge) * discountRate;
+
+        // 8. Lost ticket
+        decimal penalty = isLostTicket ? LostTicket : 0m;
+
+        // 9. Total
+        decimal total = baseFee + surcharge - discount + overnightFee + penalty;
+
+        return new ParkingFeeResult
+        {
+            TotalFee = Math.Max(0, total)
+        };
+    }
+
+    // ── Helpers ─────────────────────────────
+
+    private bool IsWeekend(DateTime date)
+    {
+        return date.DayOfWeek == DayOfWeek.Saturday ||
+               date.DayOfWeek == DayOfWeek.Sunday;
+    }
+
+    private bool IsOvernight(DateTime checkIn, DateTime checkOut)
+    {
+        return checkIn.Hour < OvernightHour &&
+               checkOut.Hour >= OvernightHour;
     }
 }
