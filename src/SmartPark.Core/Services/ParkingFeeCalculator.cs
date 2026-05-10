@@ -65,7 +65,7 @@ public class ParkingFeeCalculator
 
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
-    // Grace period
+    // 1. Grace period
     if (totalMinutes <= GracePeriodMinutes)
     {
         return new ParkingFeeResult
@@ -74,11 +74,11 @@ public class ParkingFeeCalculator
         };
     }
 
-    // Billable hours (rounded up)
+    // 2. Billable hours
     var billableHours = (int)Math.Ceiling((totalMinutes - GracePeriodMinutes) / 60.0);
     if (billableHours < 1) billableHours = 1;
 
-    // Vehicle rate
+    // 3. Rate
     decimal rate = vehicleType switch
     {
         VehicleType.Motorcycle => MotorcycleRatePerHour,
@@ -87,9 +87,10 @@ public class ParkingFeeCalculator
         _ => 0m
     };
 
+    // 4. Base fee
     var baseFee = rate * billableHours;
 
-    // Daily cap
+    // 5. Daily cap
     decimal cap = vehicleType switch
     {
         VehicleType.Motorcycle => MotorcycleDailyCap,
@@ -101,7 +102,7 @@ public class ParkingFeeCalculator
     if (baseFee > cap)
         baseFee = cap;
 
-    // Lost ticket penalty
+    // 6. Lost ticket penalty
     if (isLostTicket)
         baseFee += LostTicketPenalty;
 
