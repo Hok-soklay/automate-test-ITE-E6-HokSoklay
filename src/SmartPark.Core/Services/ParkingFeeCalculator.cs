@@ -52,7 +52,7 @@ public class ParkingFeeCalculator
     ///   8. Lost ticket: +20,000 KHR (not subject to discounts)
     ///   9. Total: baseFee + surcharge − discount + overnight + penalty (min 0)
     /// </remarks>
-   public ParkingFeeResult CalculateFee(
+  public ParkingFeeResult CalculateFee(
     VehicleType vehicleType,
     MembershipTier membership,
     DateTime checkIn,
@@ -65,7 +65,7 @@ public class ParkingFeeCalculator
 
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
-    // 1. Grace period
+    // Grace period
     if (totalMinutes <= GracePeriodMinutes)
     {
         return new ParkingFeeResult
@@ -74,11 +74,12 @@ public class ParkingFeeCalculator
         };
     }
 
-    // 2. Billable hours
+    // Billing calculation
     var billableHours = (int)Math.Ceiling((totalMinutes - GracePeriodMinutes) / 60.0);
-    if (billableHours < 1) billableHours = 1;
+    if (billableHours < 1)
+        billableHours = 1;
 
-    // 3. Rate
+    // Rate selection
     decimal rate = vehicleType switch
     {
         VehicleType.Motorcycle => MotorcycleRatePerHour,
@@ -87,10 +88,10 @@ public class ParkingFeeCalculator
         _ => 0m
     };
 
-    // 4. Base fee
+    // Base fee
     var baseFee = rate * billableHours;
 
-    // 5. Daily cap
+    // Cap selection
     decimal cap = vehicleType switch
     {
         VehicleType.Motorcycle => MotorcycleDailyCap,
@@ -99,10 +100,11 @@ public class ParkingFeeCalculator
         _ => 0m
     };
 
+    // Apply cap
     if (baseFee > cap)
         baseFee = cap;
 
-    // 6. Lost ticket penalty
+    // Lost ticket penalty
     if (isLostTicket)
         baseFee += LostTicketPenalty;
 
