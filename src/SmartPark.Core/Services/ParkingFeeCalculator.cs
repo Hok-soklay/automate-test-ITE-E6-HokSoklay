@@ -60,29 +60,31 @@ public class ParkingFeeCalculator
     bool isLostTicket = false,
     bool isHoliday = false)
 {
+    if (checkOut < checkIn)
+        throw new ArgumentException("Invalid time range");
+
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
-    var hours = Math.Ceiling((totalMinutes - 30) / 60);
 
-    if (vehicleType == VehicleType.Motorcycle)
-    {
-        return new ParkingFeeResult
-        {
-            TotalFee = 500m * (decimal)hours
-        };
-    }
+    // ✅ Grace period (IMPORTANT FIX)
+    if (totalMinutes <= 30)
+        return new ParkingFeeResult { TotalFee = 0 };
 
-    if (vehicleType == VehicleType.Car)
+    var billableMinutes = totalMinutes - 30;
+    var hours = Math.Ceiling(billableMinutes / 60);
+
+    decimal rate = vehicleType switch
     {
-        return new ParkingFeeResult
-        {
-            TotalFee = 1000m * (decimal)hours
-        };
-    }
+        VehicleType.Motorcycle => 500m,
+        VehicleType.Car => 1000m,
+        VehicleType.SUV => 1500m,
+        _ => 0m
+    };
+
+    var baseFee = rate * (decimal)hours;
 
     return new ParkingFeeResult
     {
-        TotalFee = 0
+        TotalFee = baseFee
     };
 }
-
 }
