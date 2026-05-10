@@ -161,7 +161,23 @@ public void CalculateFee_Car_LostTicket_Adds20000Penalty()
 #endregion
 
     #region Edge Cases
-    // Test invalid inputs and boundary conditions
+    [Fact]
+public void CalculateFee_NegativeDuration_ReturnsZeroInsteadOfException()
+{
+    // Arrange
+    var checkIn = new DateTime(2026, 5, 10, 12, 0, 0);
+    var checkOut = checkIn.AddHours(-1);
+
+    // Act
+    var result = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Guest,
+        checkIn,
+        checkOut);
+
+    // Assert
+    Assert.Equal(0m, result.TotalFee);
+ }
     #endregion
 
     #region Property-Based Tests
