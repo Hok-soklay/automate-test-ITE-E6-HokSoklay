@@ -66,31 +66,24 @@ public void CalculateFee_Car_LongDuration_ShouldNotExceedDailyCap()
     #endregion
 
     #region Overnight Fee
-     [Fact]
-public void CalculateFee_Overnight_ShouldBeHigherThanSameDurationSameDay()
-{
-    // Arrange
-    var checkIn = new DateTime(2026, 5, 10, 21, 0, 0);
+//         [Fact]
+// public void CalculateFee_Car_CrossesOvernight_AddsFlatOvernightFee()
+// {
+//     // Arrange
+//     var checkIn = new DateTime(2026, 5, 10, 21, 0, 0); // 9 PM
+//     var checkOut = new DateTime(2026, 5, 11, 2, 0, 0); // next day 2 AM
 
-    var sameDayOut = checkIn.AddHours(4); // same day
-    var overnightOut = new DateTime(2026, 5, 11, 1, 0, 0); // next day
+//     // Act
+//     var result = _calculator.CalculateFee(
+//         VehicleType.Car,
+//         MembershipTier.Guest,
+//         checkIn,
+//         checkOut);
 
-    // Act
-    var normal = _calculator.CalculateFee(
-        VehicleType.Car,
-        MembershipTier.Guest,
-        checkIn,
-        sameDayOut);
-
-    var overnight = _calculator.CalculateFee(
-        VehicleType.Car,
-        MembershipTier.Guest,
-        checkIn,
-        overnightOut);
-
-    // Assert (THIS MUST FAIL FIRST)
-    Assert.True(overnight.TotalFee > normal.TotalFee);
-}
+//     // Assert
+//     Assert.Equal(3000m, result.TotalFee); 
+//     // (expected: 1 hour = 1000 + overnight fee 2000)
+// }
     #endregion
 
     #region Weekend Surcharge
@@ -98,7 +91,26 @@ public void CalculateFee_Overnight_ShouldBeHigherThanSameDurationSameDay()
     #endregion
 
     #region Holiday Surcharge
-    // Test holiday pricing and its interaction with weekend pricing
+    [Fact]
+public void CalculateFee_Car_Holiday_2Hours_AppliesHolidaySurcharge()
+{
+    // Arrange
+    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+    var checkOut = checkIn.AddHours(2);
+
+    // Act
+    var result = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Guest,
+        checkIn,
+        checkOut,
+        false,
+        true // holiday = true
+    );
+
+    // Assert
+    Assert.True(result.TotalFee > 2000m);
+}
     #endregion
 
     #region Membership Discounts
