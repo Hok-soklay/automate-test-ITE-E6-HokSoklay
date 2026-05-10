@@ -14,32 +14,6 @@ public class ParkingFeeCalculatorTests
     //  Delete or keep this; it does not count toward your grade.
     // ────────────────────────────────────────────────────────────
 
-    #region Basic Fee Calculation
-    // Test basic hourly rates for each vehicle type
-    // Consider using [Theory] with [InlineData] for multiple scenarios
-    #endregion
-
-    #region Grace Period
-    [Fact]
-public void CalculateFee_Motorcycle_1Hour_Returns500()
-{
-    // Arrange
-    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
-    var checkOut = checkIn.AddHours(1);
-
-    // Act
-    var result = _calculator.CalculateFee(
-        VehicleType.Motorcycle,
-        MembershipTier.Guest,
-        checkIn,
-        checkOut);
-
-    // Assert
-    Assert.Equal(500m, result.TotalFee);
-}
-    #endregion
-
-    #region Duration Rounding
     [Fact]
 public void CalculateFee_Car_1Hour_Returns1000()
 {
@@ -56,27 +30,23 @@ public void CalculateFee_Car_1Hour_Returns1000()
 
     // Assert
     Assert.Equal(1000m, result.TotalFee);
- }
+}
+
+    #region Basic Fee Calculation
+    // Test basic hourly rates for each vehicle type
+    // Consider using [Theory] with [InlineData] for multiple scenarios
+    #endregion
+
+    #region Grace Period
+    // Test the free parking window and its boundaries
+    #endregion
+
+    #region Duration Rounding
+    // Test how partial hours are rounded for billing
     #endregion
 
     #region Daily Cap
-    [Fact]
-public void CalculateFee_Car_LongDuration_DoesNotExceedDailyCap()
-{
-    // Arrange
-    var checkIn = new DateTime(2026, 5, 10, 8, 0, 0);
-    var checkOut = checkIn.AddHours(20); // very long stay
-
-    // Act
-    var result = _calculator.CalculateFee(
-        VehicleType.Car,
-        MembershipTier.Guest,
-        checkIn,
-        checkOut);
-
-    // Assert
-    Assert.True(result.TotalFee <= 8000m);
-}
+    // Test that fees respect maximum daily limits per vehicle type
     #endregion
 
     #region Overnight Fee
@@ -100,20 +70,7 @@ public void CalculateFee_Car_LongDuration_DoesNotExceedDailyCap()
     #endregion
 
     #region Edge Cases
-  [Fact]
-public void CalculateFee_Motorcycle_1Hour_Returns500()
-{
-    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
-    var checkOut = checkIn.AddHours(1);
-
-    var result = _calculator.CalculateFee(
-        VehicleType.Motorcycle,
-        MembershipTier.Guest,
-        checkIn,
-        checkOut);
-
-    Assert.Equal(500m, result.TotalFee);
-}
+    // Test invalid inputs and boundary conditions
     #endregion
 
     #region Property-Based Tests

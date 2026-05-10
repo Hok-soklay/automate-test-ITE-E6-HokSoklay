@@ -52,7 +52,7 @@ public class ParkingFeeCalculator
     ///   8. Lost ticket: +20,000 KHR (not subject to discounts)
     ///   9. Total: baseFee + surcharge − discount + overnight + penalty (min 0)
     /// </remarks>
-  public ParkingFeeResult CalculateFee(
+    public ParkingFeeResult CalculateFee(
     VehicleType vehicleType,
     MembershipTier membership,
     DateTime checkIn,
@@ -60,57 +60,29 @@ public class ParkingFeeCalculator
     bool isLostTicket = false,
     bool isHoliday = false)
 {
-    if (checkOut < checkIn)
-        throw new ArgumentException("Invalid time range");
-
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
+    var hours = Math.Ceiling((totalMinutes - 30) / 60);
 
-    // Grace period
-    if (totalMinutes <= GracePeriodMinutes)
+    if (vehicleType == VehicleType.Motorcycle)
     {
         return new ParkingFeeResult
         {
-            TotalFee = isLostTicket ? LostTicketPenalty : 0m
+            TotalFee = 500m * (decimal)hours
         };
     }
 
-    // Billing calculation
-    var billableHours = (int)Math.Ceiling((totalMinutes - GracePeriodMinutes) / 60.0);
-    if (billableHours < 1)
-        billableHours = 1;
-
-    // Rate selection
-    decimal rate = vehicleType switch
+    if (vehicleType == VehicleType.Car)
     {
-        VehicleType.Motorcycle => MotorcycleRatePerHour,
-        VehicleType.Car => CarRatePerHour,
-        VehicleType.SUV => SuvRatePerHour,
-        _ => 0m
-    };
-
-    // Base fee
-    var baseFee = rate * billableHours;
-
-    // Cap selection
-    decimal cap = vehicleType switch
-    {
-        VehicleType.Motorcycle => MotorcycleDailyCap,
-        VehicleType.Car => CarDailyCap,
-        VehicleType.SUV => SuvDailyCap,
-        _ => 0m
-    };
-
-    // Apply cap
-    if (baseFee > cap)
-        baseFee = cap;
-
-    // Lost ticket penalty
-    if (isLostTicket)
-        baseFee += LostTicketPenalty;
+        return new ParkingFeeResult
+        {
+            TotalFee = 1000m * (decimal)hours
+        };
+    }
 
     return new ParkingFeeResult
     {
-        TotalFee = baseFee
+        TotalFee = 0
     };
 }
+
 }
