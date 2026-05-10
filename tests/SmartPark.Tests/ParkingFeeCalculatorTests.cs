@@ -40,7 +40,23 @@ public void CalculateFee_Motorcycle_1Hour_Returns500()
     #endregion
 
     #region Duration Rounding
-    // Test how partial hours are rounded for billing
+    [Fact]
+public void CalculateFee_Car_1Hour_Returns1000()
+{
+    // Arrange
+    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+    var checkOut = checkIn.AddHours(1);
+
+    // Act
+    var result = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Guest,
+        checkIn,
+        checkOut);
+
+    // Assert
+    Assert.Equal(1000m, result.TotalFee);
+ }
     #endregion
 
     #region Daily Cap
@@ -68,7 +84,24 @@ public void CalculateFee_Motorcycle_1Hour_Returns500()
     #endregion
 
     #region Edge Cases
-    // Test invalid inputs and boundary conditions
+   [Fact]
+public void CalculateFee_LostTicket_AddsPenalty()
+{
+    // Arrange
+    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+    var checkOut = checkIn.AddHours(1);
+
+    // Act
+    var result = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Guest,
+        checkIn,
+        checkOut,
+        isLostTicket: true);
+
+    // Assert
+    Assert.True(result.TotalFee >= 20000m);
+}
     #endregion
 
     #region Property-Based Tests
