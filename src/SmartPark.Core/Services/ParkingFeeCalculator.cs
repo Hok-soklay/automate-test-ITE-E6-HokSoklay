@@ -40,64 +40,63 @@ public class ParkingFeeCalculator
     /// <summary>
     /// Calculates the parking fee following the 9-step flow in the spec.
     /// </summary>
-    /// <remarks>
-    /// Steps:
-    ///   1. Validate: checkOut before checkIn → ArgumentException
-    ///   2. Grace period: total ≤ 30 min → free (lost-ticket penalty still applies)
-    ///   3. Duration: billableHours = ⌈(totalMinutes − 30) / 60⌉, min 1
-    ///   4. Base fee: billableHours × hourlyRate, capped at dailyCap
-    ///   5. Overnight: +2,000 KHR if session spans past 22:00
-    ///   6. Surcharge: weekend +20% OR holiday +50% on baseFee (not both)
-    ///   7. Discount: (baseFee + surcharge) × membershipRate
-    ///   8. Lost ticket: +20,000 KHR (not subject to discounts)
-    ///   9. Total: baseFee + surcharge − discount + overnight + penalty (min 0)
-    /// </remarks>
     public ParkingFeeResult CalculateFee(
-    VehicleType vehicleType,
-    MembershipTier membership,
-    DateTime checkIn,
-    DateTime checkOut,
-    bool isLostTicket = false,
-    bool isHoliday = false)
-{
-    if (checkOut < checkIn)
-        throw new ArgumentException("Invalid time range");
-
-    var totalMinutes = (checkOut - checkIn).TotalMinutes;
-
-    if (totalMinutes <= 30)
-        return new ParkingFeeResult { TotalFee = 0 };
-
-    var billableMinutes = Math.Max(0, totalMinutes - 30);
-    var billableHours = Math.Ceiling(billableMinutes / 60);
-
-    decimal rate = vehicleType switch
+        VehicleType vehicleType,
+        MembershipTier membership,
+        DateTime checkIn,
+        DateTime checkOut,
+        bool isLostTicket = false,
+        bool isHoliday = false)
     {
-        VehicleType.Motorcycle => 500m,
-        VehicleType.Car => 1000m,
-        VehicleType.SUV => 1500m,
-        _ => 0m
-    };
+        // 1. Validate
+        if (checkOut < checkIn)
+            throw new ArgumentException("Invalid time range");
 
-    var baseFee = rate * (decimal)billableHours;
+        var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
-    // Apply daily cap
-    decimal dailyCap = vehicleType switch
-    {
-        VehicleType.Motorcycle => MotorcycleDailyCap,
-        VehicleType.Car => CarDailyCap,
-        VehicleType.SUV => SuvDailyCap,
-        _ => 0m
-    };
+        // 2. Grace period
+        if (totalMinutes <= 30)
+            return new ParkingFeeResult { TotalFee = 0 };
 
-    if (baseFee > dailyCap)
-    {
-        baseFee = dailyCap;
+        // 3. Duration
+        var billableMinutes = Math.Max(0, totalMinutes - 30);
+        var billableHours = Math.Ceiling(billableMinutes / 60);
+
+        // 4. Base rate
+        decimal rate = vehicleType switch
+        {
+            VehicleType.Motorcycle => MotorcycleRatePerHour,
+            VehicleType.Car => CarRatePerHour,
+            VehicleType.SUV => SuvRatePerHour,
+            _ => 0m
+        };
+
+        var baseFee = rate * (decimal)billableHours;
+
+        // Apply daily cap
+        decimal dailyCap = GetDailyCap(vehicleType);
+
+        if (baseFee > dailyCap)
+            baseFee = dailyCap;
+
+        // Return result (simplified for now)
+        return new ParkingFeeResult
+        {
+            TotalFee = baseFee
+        };
     }
 
-    return new ParkingFeeResult
+    /// <summary>
+    /// Gets daily cap based on vehicle type.
+    /// </summary>
+    private decimal GetDailyCap(VehicleType vehicleType)
     {
-        TotalFee = baseFee
-    };
-}
+        return vehicleType switch
+        {
+            VehicleType.Motorcycle => MotorcycleDailyCap,
+            VehicleType.Car => CarDailyCap,
+            VehicleType.SUV => SuvDailyCap,
+            _ => 0m
+        };
+    }
 }
