@@ -138,8 +138,27 @@ public void CalculateFee_Silver_2Hours_Returns10PercentDiscount()
 }
 #endregion
     #region Lost Ticket
-    // Test the penalty and how it interacts with other fee modifiers
-    #endregion
+
+[Fact]
+public void CalculateFee_Car_LostTicket_Adds20000Penalty()
+{
+    // Arrange
+    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+    var checkOut = checkIn.AddHours(2);
+
+    // Act
+    var result = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Guest,
+        checkIn,
+        checkOut,
+        true);
+
+    // Assert
+    Assert.Equal(22000m, result.TotalFee);
+}
+
+#endregion
 
     #region Edge Cases
     // Test invalid inputs and boundary conditions
