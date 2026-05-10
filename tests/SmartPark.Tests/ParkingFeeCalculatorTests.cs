@@ -92,25 +92,25 @@ public void CalculateFee_Car_LongDuration_ShouldNotExceedDailyCap()
 
     #region Holiday Surcharge
     [Fact]
-public void CalculateFee_Car_Holiday_2Hours_AppliesHolidaySurcharge()
-{
-    // Arrange
-    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
-    var checkOut = checkIn.AddHours(2);
+            public void CalculateFee_Car_Holiday_2Hours_AppliesHolidaySurcharge()
+            {
+                // Arrange
+                var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+                var checkOut = checkIn.AddHours(2);
 
-    // Act
-    var result = _calculator.CalculateFee(
-        VehicleType.Car,
-        MembershipTier.Guest,
-        checkIn,
-        checkOut,
-        false,
-        true // holiday = true
-    );
+                // Act
+                var result = _calculator.CalculateFee(
+                    VehicleType.Car,
+                    MembershipTier.Guest,
+                    checkIn,
+                    checkOut,
+                    false,
+                    true // holiday = true
+                );
 
-    // Assert
-    Assert.True(result.TotalFee > 2000m);
-}
+                // Assert
+                Assert.True(result.TotalFee > 2000m);
+            }
     #endregion
 
     #region Membership Discounts
