@@ -48,9 +48,9 @@ public class ParkingFeeCalculator
     bool isLostTicket = false,
     bool isHoliday = false)
 {
-    // 1. Validate
-   if (checkOut < checkIn)
-    return new ParkingFeeResult { TotalFee = 0 };
+    // 1. Validate (refactored)
+    if (IsInvalidTimeRange(checkIn, checkOut))
+        return new ParkingFeeResult { TotalFee = 0 };
 
     var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
@@ -88,22 +88,13 @@ public class ParkingFeeCalculator
         membership);
 
     // Lost ticket penalty
-    decimal lostTicketPenalty = 0m;
-
-    if (isLostTicket)
-    {
-        lostTicketPenalty = 20000m;
-    }
+    decimal lostTicketPenalty = isLostTicket ? 20000m : 0m;
 
     return new ParkingFeeResult
     {
         TotalFee = baseFee + surcharge - discount + lostTicketPenalty
     };
 }
-
-/// <summary>
-/// Refactored: isolates holiday logic for readability
-/// </summary>
 private decimal CalculateHolidaySurcharge(decimal baseFee, bool isHoliday)
 {
     if (!isHoliday)
@@ -112,27 +103,19 @@ private decimal CalculateHolidaySurcharge(decimal baseFee, bool isHoliday)
     return baseFee * 0.5m;
 }
 
-/// <summary>
-/// Refactored: isolates membership discount logic
-/// </summary>
 private decimal CalculateMembershipDiscount(
     decimal amount,
     MembershipTier membership)
 {
-    decimal discountRate = membership switch
+    return membership switch
     {
-        MembershipTier.Silver => 0.10m,
-        MembershipTier.Gold => 0.25m,
-        MembershipTier.Platinum => 0.40m,
+        MembershipTier.Silver => amount * 0.10m,
+        MembershipTier.Gold => amount * 0.25m,
+        MembershipTier.Platinum => amount * 0.40m,
         _ => 0m
     };
-
-    return amount * discountRate;
 }
 
-/// <summary>
-/// Gets daily cap based on vehicle type.
-/// </summary>
 private decimal GetDailyCap(VehicleType vehicleType)
 {
     return vehicleType switch
@@ -142,5 +125,10 @@ private decimal GetDailyCap(VehicleType vehicleType)
         VehicleType.SUV => SuvDailyCap,
         _ => 0m
     };
+}
+
+private bool IsInvalidTimeRange(DateTime checkIn, DateTime checkOut)
+{
+    return checkOut < checkIn;
 }
 }
