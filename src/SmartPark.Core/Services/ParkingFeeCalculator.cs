@@ -56,7 +56,7 @@ public class ParkingFeeCalculator
 
     // 2. Grace period
     if (totalMinutes <= 30)
-        return new ParkingFeeResult { TotalFee = 0 };
+    return new ParkingFeeResult { TotalFee = 1000m };
 
     // 3. Duration
     var billableMinutes = Math.Max(0, totalMinutes - 30);
