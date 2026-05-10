@@ -81,10 +81,23 @@ public class ParkingFeeCalculator
 
     var baseFee = rate * (decimal)billableHours;
 
+    // Apply daily cap
+    decimal dailyCap = vehicleType switch
+    {
+        VehicleType.Motorcycle => MotorcycleDailyCap,
+        VehicleType.Car => CarDailyCap,
+        VehicleType.SUV => SuvDailyCap,
+        _ => 0m
+    };
+
+    if (baseFee > dailyCap)
+    {
+        baseFee = dailyCap;
+    }
+
     return new ParkingFeeResult
     {
         TotalFee = baseFee
     };
 }
-
 }
