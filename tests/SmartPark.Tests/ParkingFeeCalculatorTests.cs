@@ -14,12 +14,38 @@ public class ParkingFeeCalculatorTests
     //  Delete or keep this; it does not count toward your grade.
     // ────────────────────────────────────────────────────────────
 
+    #region Basic Fee Calculation
     [Fact]
-public void CalculateFee_Car_1Hour_Returns1000()
+        public void CalculateFee_Car_1Hour_Returns1000()
+        {
+            // Arrange
+            var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+            var checkOut = checkIn.AddHours(1);
+
+            // Act
+            var result = _calculator.CalculateFee(
+                VehicleType.Car,
+                MembershipTier.Guest,
+                checkIn,
+                checkOut);
+
+            // Assert
+            Assert.Equal(1000m, result.TotalFee);
+        }
+
+    #endregion
+
+
+     #region Duration Rounding
+
+[Fact]
+public void CalculateFee_PartialHour_ShouldRoundIncorrectly_OnPurpose()
 {
     // Arrange
     var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
-    var checkOut = checkIn.AddHours(1);
+
+    // 31 minutes (just above grace period → forces 1 hour billing)
+    var checkOut = checkIn.AddMinutes(31);
 
     // Act
     var result = _calculator.CalculateFee(
@@ -28,21 +54,14 @@ public void CalculateFee_Car_1Hour_Returns1000()
         checkIn,
         checkOut);
 
-    // Assert
-    Assert.Equal(1000m, result.TotalFee);
+    // Assert (INTENTIONALLY WRONG → RED)
+    // Real correct result should be 1000
+    Assert.Equal(2000m, result.TotalFee);
 }
 
-    #region Basic Fee Calculation
-    // Test basic hourly rates for each vehicle type
-    // Consider using [Theory] with [InlineData] for multiple scenarios
-    #endregion
+#endregion
 
-
-            #region Duration Rounding
-            // Test how partial hours are rounded for billing
-            #endregion
-
-            #region Daily Cap
+    #region Daily Cap
             [Fact]
         public void CalculateFee_Car_LongDuration_ShouldNotExceedDailyCap()
         {

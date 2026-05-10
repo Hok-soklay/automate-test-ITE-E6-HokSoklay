@@ -56,7 +56,7 @@ public class ParkingFeeCalculator
 
     // 2. Grace period
     if (totalMinutes <= 30)
-    return new ParkingFeeResult { TotalFee = 1000m };
+        return new ParkingFeeResult { TotalFee = 1000m };
 
     // 3. Duration
     var billableMinutes = Math.Max(0, totalMinutes - 30);
@@ -90,9 +90,14 @@ public class ParkingFeeCalculator
     // Lost ticket penalty
     decimal lostTicketPenalty = isLostTicket ? 20000m : 0m;
 
+    // =========================
+    // OVERNIGHT (FIXED POSITION)
+    // =========================
+    decimal overnightFee = CalculateOvernightFee(checkIn, checkOut, vehicleType);
+
     return new ParkingFeeResult
     {
-        TotalFee = baseFee + surcharge - discount + lostTicketPenalty
+        TotalFee = baseFee + surcharge - discount + lostTicketPenalty + overnightFee
     };
 }
 private decimal CalculateHolidaySurcharge(decimal baseFee, bool isHoliday)
@@ -130,5 +135,20 @@ private decimal GetDailyCap(VehicleType vehicleType)
 private bool IsInvalidTimeRange(DateTime checkIn, DateTime checkOut)
 {
     return checkOut < checkIn;
+}
+
+private decimal CalculateOvernightFee(DateTime checkIn, DateTime checkOut, VehicleType vehicleType)
+{
+    // If same day → no overnight fee
+    if (checkIn.Date == checkOut.Date)
+        return 0m;
+
+    return vehicleType switch
+    {
+        VehicleType.Car => 2000m,
+        VehicleType.Motorcycle => 1000m,
+        VehicleType.SUV => 3000m,
+        _ => 0m
+    };
 }
 }
