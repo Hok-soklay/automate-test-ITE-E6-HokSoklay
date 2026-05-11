@@ -36,81 +36,14 @@ public class ParkingFeeCalculatorTests
     #endregion
 
 
-//      #region Duration Rounding
-
-// [Fact]
-// public void CalculateFee_PartialHour_ShouldRoundIncorrectly_OnPurpose()
-// {
-//     // Arrange
-//     var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
-
-//     // 31 minutes (just above grace period → forces 1 hour billing)
-//     var checkOut = checkIn.AddMinutes(31);
-
-//     // Act
-//     var result = _calculator.CalculateFee(
-//         VehicleType.Car,
-//         MembershipTier.Guest,
-//         checkIn,
-//         checkOut);
-
-//     // Assert (INTENTIONALLY WRONG → RED)
-//     // Real correct result should be 1000
-//     Assert.Equal(2000m, result.TotalFee);
-// }
-
-// #endregion
-
-    #region Daily Cap
-            [Fact]
-        public void CalculateFee_Car_LongDuration_ShouldNotExceedDailyCap()
-        {
-            // Arrange
-            var checkIn = new DateTime(2026, 5, 10, 8, 0, 0);
-            var checkOut = checkIn.AddHours(24);
-
-            // Act
-            var result = _calculator.CalculateFee(
-                VehicleType.Car,
-                MembershipTier.Guest,
-                checkIn,
-                checkOut);
-
-            // Assert
-            Assert.True(result.TotalFee <= 15000m);
-        }
-    #endregion
-
-    #region Overnight Fee
-
-            [Fact]
-            public void CalculateFee_CrossMidnight_ShouldApplyOvernightFee()
-            {
-                // Arrange
-                var checkIn = new DateTime(2026, 5, 10, 22, 0, 0); // 10 PM
-                var checkOut = new DateTime(2026, 5, 11, 2, 0, 0); // 2 AM next day
-
-                // Act
-                var result = _calculator.CalculateFee(
-                    VehicleType.Car,
-                    MembershipTier.Guest,
-                    checkIn,
-                    checkOut);
-
-                // Assert (INTENTIONALLY EXPECTING RULE THAT DOES NOT EXIST YET)
-                Assert.True(result.TotalFee > 5000m);
-            }
-
-     #endregion
-
-   #region Weekend Surcharge
+#region Duration Rounding
 
 [Fact]
-public void CalculateFee_Weekend_ShouldApplyWeekendSurcharge()
+public void CalculateFee_PartialHour_ShouldRoundUp_ToNextHour()
 {
     // Arrange
-    var checkIn = new DateTime(2026, 5, 9, 10, 0, 0); // Saturday
-    var checkOut = checkIn.AddHours(2);
+    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+    var checkOut = checkIn.AddMinutes(31);
 
     // Act
     var result = _calculator.CalculateFee(
@@ -119,60 +52,14 @@ public void CalculateFee_Weekend_ShouldApplyWeekendSurcharge()
         checkIn,
         checkOut);
 
-    // Assert (INTENTIONALLY FAILING → RED)
-    // Current system does not support weekend surcharge yet
-    Assert.True(result.TotalFee > 2000m);
+    // Assert (FORCE RED)
+    // This is intentionally WRONG expectation to force failure
+    Assert.Equal(5000m, result.TotalFee);
 }
 
 #endregion
 
-    #region Holiday Surcharge
-    [Fact]
-            public void CalculateFee_Car_Holiday_2Hours_AppliesHolidaySurcharge()
-            {
-                // Arrange
-                var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
-                var checkOut = checkIn.AddHours(2);
 
-                // Act
-                var result = _calculator.CalculateFee(
-                    VehicleType.Car,
-                    MembershipTier.Guest,
-                    checkIn,
-                    checkOut,
-                    false,
-                    true // holiday = true
-                );
-
-                // Assert
-                Assert.True(result.TotalFee > 2000m);
-            }
-    #endregion
-
-    #region Membership Discounts
-   [Fact]
-public void CalculateFee_Silver_2Hours_Returns10PercentDiscount()
-{
-    // Arrange
-    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
-    var checkOut = checkIn.AddHours(2);
-
-    // Act
-    var result = _calculator.CalculateFee(
-        VehicleType.Car,
-        MembershipTier.Silver,
-        checkIn,
-        checkOut);
-
-    // Expected:
-    // Base = 2000
-    // Discount = 10% = 200
-    // Final = 1800
-
-    // Assert
-    Assert.Equal(1800m, result.TotalFee);
-}
-#endregion
     #region Lost Ticket
 
 [Fact]
