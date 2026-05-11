@@ -60,7 +60,9 @@ public class ParkingFeeCalculator
 
         // 3. Duration
         var billableMinutes = Math.Max(0, totalMinutes - GracePeriodMinutes);
-        var billableHours = Math.Ceiling(billableMinutes / 60);
+        // convert to hours
+        var billableHours = (decimal)Math.Ceiling(billableMinutes / 60.0);
+
 
         // 4. Base rate
         decimal rate = vehicleType switch
@@ -186,4 +188,17 @@ public class ParkingFeeCalculator
             _ => 0m
         };
     }
+
+    private decimal FixBillableHours(double totalMinutes)
+{
+    // keep your existing logic untouched
+    var billableMinutes = Math.Max(0, totalMinutes - GracePeriodMinutes);
+    var hours = Math.Ceiling(billableMinutes / 60);
+
+    // safety fix to ensure minimum 1 hour billing
+    if (hours < 1)
+        hours = 1;
+
+    return (decimal)hours;
+}
 }
