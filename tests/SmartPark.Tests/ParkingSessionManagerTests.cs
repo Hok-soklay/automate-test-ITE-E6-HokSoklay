@@ -7,6 +7,14 @@ namespace SmartPark.Tests;
 
 public class ParkingSessionManagerTests
 {
+    // ────────────────────────────────────────────────────────────
+    //  SHARED SETUP — create test doubles and the system-under-test.
+    //  Moq's Mock<T> creates test doubles that can act as:
+    //    - Stubs: .Setup().Returns() — provide canned answers
+    //    - Mocks: .Verify()         — assert interactions happened
+    //  You can use a constructor, or duplicate this in each test.
+    // ────────────────────────────────────────────────────────────
+
     private readonly Mock<IPaymentGateway> _paymentStub = new();
     private readonly Mock<INotificationService> _notificationStub = new();
     private readonly Mock<IMembershipService> _membershipStub = new();
@@ -15,32 +23,8 @@ public class ParkingSessionManagerTests
     private readonly ParkingFeeCalculator _feeCalculator = new();
     private readonly ParkingSessionManager _manager;
 
-    // ✅ FIX: in-memory storage for repository behavior
-    private readonly Dictionary<string, ParkingTicket> _store = new();
-
     public ParkingSessionManagerTests()
     {
-        // 🔧 Make repo behave like real storage
-        _repoStub.Setup(r => r.SaveTicketAsync(It.IsAny<ParkingTicket>()))
-            .Returns((ParkingTicket t) =>
-            {
-                _store[t.Vehicle.LicensePlate] = t;
-                return Task.CompletedTask;
-            });
-
-        _repoStub.Setup(r => r.GetActiveTicketByPlateAsync(It.IsAny<string>()))
-            .ReturnsAsync((string plate) =>
-            {
-                return _store.TryGetValue(plate, out var ticket) ? ticket : null;
-            });
-
-        _repoStub.Setup(r => r.UpdateTicketAsync(It.IsAny<ParkingTicket>()))
-            .Returns((ParkingTicket t) =>
-            {
-                _store[t.Vehicle.LicensePlate] = t;
-                return Task.CompletedTask;
-            });
-
         _manager = new ParkingSessionManager(
             _feeCalculator,
             _paymentStub.Object,
@@ -50,10 +34,17 @@ public class ParkingSessionManagerTests
             _dateTimeStub.Object);
     }
 
+    // ────────────────────────────────────────────────────────────
+    //  EXAMPLE TEST — shows stub setup + mock verification pattern.
+    //  .Setup().Returns() = STUB behavior (canned answer)
+    //  .Verify()          = MOCK behavior (interaction assertion)
+    //  Delete or keep this; it does not count toward your grade.
+    // ────────────────────────────────────────────────────────────
+
     [Fact]
     public async Task CheckInAsync_NewVehicle_LookUpMembership()
     {
-        // Arrange
+        // Arrange — configure stubs (canned return values)
         _membershipStub.Setup(m => m.GetMembershipTier("PP-9999")).Returns(MembershipTier.Guest);
         _repoStub.Setup(r => r.GetActiveTicketByPlateAsync("PP-9999")).ReturnsAsync((ParkingTicket?)null);
         _dateTimeStub.Setup(d => d.Now).Returns(new DateTime(2026, 3, 16, 10, 0, 0));
@@ -61,7 +52,7 @@ public class ParkingSessionManagerTests
         // Act
         var ticket = await _manager.CheckInAsync("PP-9999", VehicleType.Car);
 
-        // Assert
+        // Assert — verify as mock (was this interaction called?)
         _membershipStub.Verify(m => m.GetMembershipTier("PP-9999"), Times.Once);
         Assert.Equal("PP-9999", ticket.Vehicle.LicensePlate);
     }

@@ -40,115 +40,150 @@ public class ParkingFeeCalculator
     /// <summary>
     /// Calculates the parking fee following the 9-step flow in the spec.
     /// </summary>
-public ParkingFeeResult CalculateFee(
-    VehicleType vehicleType,
-    MembershipTier membership,
-    DateTime checkIn,
-    DateTime checkOut,
-    bool isLostTicket = false,
-    bool isHoliday = false)
-{
-    // 1. Validate (refactored)
-    if (IsInvalidTimeRange(checkIn, checkOut))
-        return new ParkingFeeResult { TotalFee = 0 };
-
-    var totalMinutes = (checkOut - checkIn).TotalMinutes;
-
-    // 2. Grace period
-    if (totalMinutes <= 30)
-        return new ParkingFeeResult { TotalFee = 1000m };
-
-    // 3. Duration
-    var billableMinutes = Math.Max(0, totalMinutes - 30);
-    var billableHours = Math.Ceiling(billableMinutes / 60);
-
-    // 4. Base rate
-    decimal rate = vehicleType switch
+    public ParkingFeeResult CalculateFee(
+        VehicleType vehicleType,
+        MembershipTier membership,
+        DateTime checkIn,
+        DateTime checkOut,
+        bool isLostTicket = false,
+        bool isHoliday = false)
     {
-        VehicleType.Motorcycle => MotorcycleRatePerHour,
-        VehicleType.Car => CarRatePerHour,
-        VehicleType.SUV => SuvRatePerHour,
-        _ => 0m
-    };
+        // 1. Validate
+        if (IsInvalidTimeRange(checkIn, checkOut))
+            return new ParkingFeeResult { TotalFee = 0 };
 
-    var baseFee = rate * (decimal)billableHours;
+        var totalMinutes = (checkOut - checkIn).TotalMinutes;
 
-    // Apply daily cap
-    decimal dailyCap = GetDailyCap(vehicleType);
+        // 2. Grace period
+        if (totalMinutes <= GracePeriodMinutes)
+            return new ParkingFeeResult { TotalFee = 1000m };
 
-    if (baseFee > dailyCap)
-        baseFee = dailyCap;
+        // 3. Duration
+        var billableMinutes = Math.Max(0, totalMinutes - GracePeriodMinutes);
+        var billableHours = Math.Ceiling(billableMinutes / 60);
 
-    // Holiday surcharge
-    decimal surcharge = CalculateHolidaySurcharge(baseFee, isHoliday);
+        // 4. Base rate
+        decimal rate = vehicleType switch
+        {
+            VehicleType.Motorcycle => MotorcycleRatePerHour,
+            VehicleType.Car => CarRatePerHour,
+            VehicleType.SUV => SuvRatePerHour,
+            _ => 0m
+        };
 
-    // Membership discount
-    decimal discount = CalculateMembershipDiscount(
-        baseFee + surcharge,
-        membership);
+        var baseFee = rate * (decimal)billableHours;
 
-    // Lost ticket penalty
-    decimal lostTicketPenalty = isLostTicket ? 20000m : 0m;
+        // 5. Apply daily cap
+        decimal dailyCap = GetDailyCap(vehicleType);
 
-  
-    // OVERNIGHT 
+        if (baseFee > dailyCap)
+            baseFee = dailyCap;
 
-    decimal overnightFee = CalculateOvernightFee(checkIn, checkOut, vehicleType);
+        // 6. Holiday surcharge
+        decimal surcharge = CalculateHolidaySurcharge(baseFee, isHoliday);
 
-    return new ParkingFeeResult
+        // 7. Membership discount
+        decimal discount = CalculateMembershipDiscount(
+            baseFee + surcharge,
+            membership);
+
+        // 8. Lost ticket penalty
+        decimal lostTicketPenalty = isLostTicket
+            ? LostTicketPenalty
+            : 0m;
+
+        // 9. Overnight fee
+        decimal overnightFee = CalculateOvernightFee(
+            checkIn,
+            checkOut,
+            vehicleType);
+
+        // Weekend surcharge
+        decimal weekendSurcharge = 0m;
+
+        // Apply ONLY for:
+        // - Weekend
+        // - Guest users
+        // - 2+ billable hours
+        // - Not holiday
+        // - Not lost ticket
+        if (!isHoliday &&
+            !isLostTicket &&
+            membership == MembershipTier.Guest &&
+            billableHours >= 2 &&
+            (checkIn.DayOfWeek == DayOfWeek.Saturday ||
+             checkIn.DayOfWeek == DayOfWeek.Sunday))
+        {
+            weekendSurcharge = baseFee * 0.25m;
+        }
+
+        return new ParkingFeeResult
+        {
+            TotalFee = baseFee
+                     + surcharge
+                     + weekendSurcharge
+                     - discount
+                     + lostTicketPenalty
+                     + overnightFee
+        };
+    }
+
+    private decimal CalculateHolidaySurcharge(
+        decimal baseFee,
+        bool isHoliday)
     {
-        TotalFee = baseFee + surcharge - discount + lostTicketPenalty + overnightFee
-    };
-}
-private decimal CalculateHolidaySurcharge(decimal baseFee, bool isHoliday)
-{
-    if (!isHoliday)
-        return 0m;
+        if (!isHoliday)
+            return 0m;
 
-    return baseFee * 0.5m;
-}
+        return baseFee * 0.5m;
+    }
 
-private decimal CalculateMembershipDiscount(
-    decimal amount,
-    MembershipTier membership)
-{
-    return membership switch
+    private decimal CalculateMembershipDiscount(
+        decimal amount,
+        MembershipTier membership)
     {
-        MembershipTier.Silver => amount * 0.10m,
-        MembershipTier.Gold => amount * 0.25m,
-        MembershipTier.Platinum => amount * 0.40m,
-        _ => 0m
-    };
-}
+        return membership switch
+        {
+            MembershipTier.Silver => amount * 0.10m,
+            MembershipTier.Gold => amount * 0.25m,
+            MembershipTier.Platinum => amount * 0.40m,
+            _ => 0m
+        };
+    }
 
-private decimal GetDailyCap(VehicleType vehicleType)
-{
-    return vehicleType switch
+    private decimal GetDailyCap(VehicleType vehicleType)
     {
-        VehicleType.Motorcycle => MotorcycleDailyCap,
-        VehicleType.Car => CarDailyCap,
-        VehicleType.SUV => SuvDailyCap,
-        _ => 0m
-    };
-}
+        return vehicleType switch
+        {
+            VehicleType.Motorcycle => MotorcycleDailyCap,
+            VehicleType.Car => CarDailyCap,
+            VehicleType.SUV => SuvDailyCap,
+            _ => 0m
+        };
+    }
 
-private bool IsInvalidTimeRange(DateTime checkIn, DateTime checkOut)
-{
-    return checkOut < checkIn;
-}
-
-private decimal CalculateOvernightFee(DateTime checkIn, DateTime checkOut, VehicleType vehicleType)
-{
-    // If same day → no overnight fee
-    if (checkIn.Date == checkOut.Date)
-        return 0m;
-
-    return vehicleType switch
+    private bool IsInvalidTimeRange(
+        DateTime checkIn,
+        DateTime checkOut)
     {
-        VehicleType.Car => 2000m,
-        VehicleType.Motorcycle => 1000m,
-        VehicleType.SUV => 3000m,
-        _ => 0m
-    };
-}
+        return checkOut < checkIn;
+    }
+
+    private decimal CalculateOvernightFee(
+        DateTime checkIn,
+        DateTime checkOut,
+        VehicleType vehicleType)
+    {
+        // Same day → no overnight fee
+        if (checkIn.Date == checkOut.Date)
+            return 0m;
+
+        return vehicleType switch
+        {
+            VehicleType.Car => 2000m,
+            VehicleType.Motorcycle => 1000m,
+            VehicleType.SUV => 3000m,
+            _ => 0m
+        };
+    }
 }
