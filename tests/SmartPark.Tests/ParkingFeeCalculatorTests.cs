@@ -36,30 +36,30 @@ public class ParkingFeeCalculatorTests
     #endregion
 
 
-     #region Duration Rounding
+//      #region Duration Rounding
 
-[Fact]
-public void CalculateFee_PartialHour_ShouldRoundIncorrectly_OnPurpose()
-{
-    // Arrange
-    var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
+// [Fact]
+// public void CalculateFee_PartialHour_ShouldRoundIncorrectly_OnPurpose()
+// {
+//     // Arrange
+//     var checkIn = new DateTime(2026, 5, 10, 10, 0, 0);
 
-    // 31 minutes (just above grace period → forces 1 hour billing)
-    var checkOut = checkIn.AddMinutes(31);
+//     // 31 minutes (just above grace period → forces 1 hour billing)
+//     var checkOut = checkIn.AddMinutes(31);
 
-    // Act
-    var result = _calculator.CalculateFee(
-        VehicleType.Car,
-        MembershipTier.Guest,
-        checkIn,
-        checkOut);
+//     // Act
+//     var result = _calculator.CalculateFee(
+//         VehicleType.Car,
+//         MembershipTier.Guest,
+//         checkIn,
+//         checkOut);
 
-    // Assert (INTENTIONALLY WRONG → RED)
-    // Real correct result should be 1000
-    Assert.Equal(2000m, result.TotalFee);
-}
+//     // Assert (INTENTIONALLY WRONG → RED)
+//     // Real correct result should be 1000
+//     Assert.Equal(2000m, result.TotalFee);
+// }
 
-#endregion
+// #endregion
 
     #region Daily Cap
             [Fact]
@@ -103,9 +103,28 @@ public void CalculateFee_PartialHour_ShouldRoundIncorrectly_OnPurpose()
 
      #endregion
 
-    #region Weekend Surcharge
-    // Test the percentage-based surcharge on specific days
-    #endregion
+   #region Weekend Surcharge
+
+[Fact]
+public void CalculateFee_Weekend_ShouldApplyWeekendSurcharge()
+{
+    // Arrange
+    var checkIn = new DateTime(2026, 5, 9, 10, 0, 0); // Saturday
+    var checkOut = checkIn.AddHours(2);
+
+    // Act
+    var result = _calculator.CalculateFee(
+        VehicleType.Car,
+        MembershipTier.Guest,
+        checkIn,
+        checkOut);
+
+    // Assert (INTENTIONALLY FAILING → RED)
+    // Current system does not support weekend surcharge yet
+    Assert.True(result.TotalFee > 2000m);
+}
+
+#endregion
 
     #region Holiday Surcharge
     [Fact]

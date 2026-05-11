@@ -40,7 +40,7 @@ public class ParkingFeeCalculator
     /// <summary>
     /// Calculates the parking fee following the 9-step flow in the spec.
     /// </summary>
-    public ParkingFeeResult CalculateFee(
+public ParkingFeeResult CalculateFee(
     VehicleType vehicleType,
     MembershipTier membership,
     DateTime checkIn,
@@ -90,9 +90,9 @@ public class ParkingFeeCalculator
     // Lost ticket penalty
     decimal lostTicketPenalty = isLostTicket ? 20000m : 0m;
 
-    // =========================
-    // OVERNIGHT (FIXED POSITION)
-    // =========================
+  
+    // OVERNIGHT 
+
     decimal overnightFee = CalculateOvernightFee(checkIn, checkOut, vehicleType);
 
     return new ParkingFeeResult
